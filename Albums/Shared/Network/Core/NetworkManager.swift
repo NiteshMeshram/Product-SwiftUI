@@ -6,15 +6,44 @@
 //
 
 import SwiftUI
+import Combine
 
-enum NetworkError: Error {
-    case badURL
-    case requestFailed(Error)
-    case invalidResponse
-    case decodingError(Error)
-    case serverError(statusCode: Int)
+
+final class NetworkManager {
+    static let shared = NetworkManager()
+    private let session: URLSession
+
+    private init(session: URLSession = .shared) {
+        self.session = session
+    }
+
+    func request<T: Decodable>(_ endpoint: APIEndpoint, responseType: T.Type) async throws -> T {
+        let request = try RequestBuilder.buildRequest(from: endpoint)
+        
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.noData
+        }
+
+        guard 200..<300 ~= httpResponse.statusCode else {
+            throw NetworkError.badStatusCode(httpResponse.statusCode)
+        }
+
+        return try ResponseDecoder.decode(T.self, from: data)
+    }
 }
 
+
+//enum NetworkError: Error {
+//    case badURL
+//    case requestFailed(Error)
+//    case invalidResponse
+//    case decodingError(Error)
+//    case serverError(statusCode: Int)
+//}
+
+/*
 class NetworkManager {
     static let shared = NetworkManager()
         private init() {}
@@ -27,7 +56,7 @@ class NetworkManager {
             responseType: T.Type
         ) async throws -> T {
             guard let url = URL(string: urlString) else {
-                throw NetworkError.badURL
+                throw NetworkError.invalidURL
             }
 
             var request = URLRequest(url: url)
@@ -60,3 +89,17 @@ class NetworkManager {
             }
         }
 }
+
+
+extension NetworkManager {
+    func requestPublisher<T: Decodable>(urlString: String, responseType: T.Type) -> AnyPublisher<T, Error> {
+        guard let url = URL(string: urlString) else {
+            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
+        }
+
+        return URLSession.shared.dataTaskPublisher(for: url)
+            .map(\.data)
+            .decode(type: responseType, decoder: JSONDecoder())
+            .eraseToAnyPublisher()
+    }
+}*/

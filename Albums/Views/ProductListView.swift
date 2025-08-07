@@ -10,10 +10,9 @@ import SwiftUI
 struct ProductListView: View {
     let categoryId: Int
     @StateObject private var productViewModel = ProductViewModel()
-    
-    
     var body: some View {
-        
+        Text("Show Products")
+        /*
         let columns = [GridItem(.flexible()), GridItem(.flexible())]
         
         ScrollView {
@@ -30,11 +29,8 @@ struct ProductListView: View {
                 await productViewModel.getProducts(forCategoryId: categoryId)
             }
         }
-        
-        
-        
+        */
     }
-    
 }
 
 #Preview {

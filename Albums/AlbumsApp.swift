@@ -17,4 +17,5 @@ struct AlbumsApp: App {
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
     }
+    
 }
